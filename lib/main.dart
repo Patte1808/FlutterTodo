@@ -10,7 +10,9 @@ final ThemeData _themeData = new ThemeData(
 );
 
 typedef void OnAddTodoItem(Todo todo);
+
 typedef void OnChangeTodoStatus(Todo todo);
+
 typedef void OnChangeBottomNavigationItem(int index);
 
 class MyApp extends StatefulWidget {
@@ -84,7 +86,8 @@ class _MyAppState extends State<MyApp> {
       title: 'My App',
       theme: _themeData,
       home: new TodoList(
-          this._todos, this._handleAddTodoItem, this._handleChangeTodoStatus, this.currentIndex, this._handleChangeButtomNavigationItem),
+          this._todos, this._handleAddTodoItem, this._handleChangeTodoStatus,
+          this.currentIndex, this._handleChangeButtomNavigationItem),
       routes: _routes,
       onGenerateRoute: _getRoute,
     );
@@ -100,7 +103,8 @@ class TodoList extends StatelessWidget {
 
   int currentIndex;
 
-  TodoList(this.todos, this.onAddTodoItem, this.onChangeTodoStatus, this.currentIndex, this.onChangeBottomNavigationItem);
+  TodoList(this.todos, this.onAddTodoItem, this.onChangeTodoStatus,
+      this.currentIndex, this.onChangeBottomNavigationItem);
 
   @override
   Widget build(BuildContext context) {
@@ -108,15 +112,8 @@ class TodoList extends StatelessWidget {
       appBar: new AppBar(
         title: new Text('My Organizer'),
       ),
-      body: new ListView(
-          children: this.todos.map((Todo todo) {
-            return new TodoListItem(
-              todo: todo,
-              id: this.todos.length - 1,
-              onChangeTodoStatus: onChangeTodoStatus,
-            );
-          }).toList()
-      ),
+      body: new TodoListBody(
+          this.todos, this.currentIndex, this.onChangeTodoStatus),
       bottomNavigationBar: new BottomNavigationBar(
         currentIndex: currentIndex,
         onTap: (int index) {
@@ -142,6 +139,34 @@ class TodoList extends StatelessWidget {
         child: new Icon(Icons.add),
         onPressed: () => Navigator.pushNamed(context, '/todo/new'),
       ),
+    );
+  }
+}
+
+class TodoListBody extends StatelessWidget {
+
+  List<Todo> todos;
+  int currentIndex;
+  OnChangeTodoStatus onChangeTodoStatus;
+
+  TodoListBody(this.todos, this.currentIndex, this.onChangeTodoStatus);
+
+  @override
+  Widget build(BuildContext context) {
+    if (this.currentIndex == 1) {
+      todos = todos.where((todo) => todo.isFinished == false).toList();
+    } else if (this.currentIndex == 2) {
+      todos = todos.where((todo) => todo.isFinished).toList();
+    }
+
+    return new ListView(
+        children: this.todos.map((Todo todo) {
+          return new TodoListItem(
+            todo: todo,
+            id: this.todos.length - 1,
+            onChangeTodoStatus: onChangeTodoStatus,
+          );
+        }).toList()
     );
   }
 }

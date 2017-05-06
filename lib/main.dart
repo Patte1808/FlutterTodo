@@ -10,6 +10,7 @@ final ThemeData _themeData = new ThemeData(
 );
 
 typedef void OnAddTodoItem(Todo todo);
+typedef void OnChangeTodoStatus(Todo todo);
 
 class MyApp extends StatefulWidget {
 
@@ -38,6 +39,12 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
+  void _handleChangeTodoStatus(Todo todo) {
+    setState(() {
+      todo.isFinished = !todo.isFinished;
+    });
+  }
+
   Route<Null> _getRoute(RouteSettings settings) {
     final List<String> path = settings.name.split('/');
     print(path[0]);
@@ -60,13 +67,12 @@ class _MyAppState extends State<MyApp> {
     var _routes = <String, WidgetBuilder>{
       '/todo/new': (BuildContext context) =>
       new TodoCreatePage(this._handleAddTodoItem),
-      '/todoDetail': (BuildContext context) => new TodoItemDetail(),
     };
 
     return new MaterialApp(
       title: 'My App',
       theme: _themeData,
-      home: new TodoList(this._todos, this._handleAddTodoItem),
+      home: new TodoList(this._todos, this._handleAddTodoItem, this._handleChangeTodoStatus),
       routes: _routes,
       onGenerateRoute: _getRoute,
     );
@@ -77,8 +83,9 @@ class TodoList extends StatelessWidget {
 
   List<Todo> todos = new List<Todo>();
   OnAddTodoItem onAddTodoItem;
+  OnChangeTodoStatus onChangeTodoStatus;
 
-  TodoList(this.todos, this.onAddTodoItem);
+  TodoList(this.todos, this.onAddTodoItem, this.onChangeTodoStatus);
 
   @override
   Widget build(BuildContext context) {
@@ -90,14 +97,14 @@ class TodoList extends StatelessWidget {
           children: this.todos.map((Todo todo) {
             return new TodoListItem(
                 todo: todo,
-                id: this.todos.length - 1
+                id: this.todos.length - 1,
+                onChangeTodoStatus: onChangeTodoStatus,
             );
           }).toList()
       ),
       floatingActionButton: new FloatingActionButton(
         tooltip: 'Add',
         child: new Icon(Icons.add),
-        //onPressed: () => this.onAddTodoItem(new Todo('', '', false)),
         onPressed: () => Navigator.pushNamed(context, '/todo/new'),
       ),
     );
@@ -107,21 +114,29 @@ class TodoList extends StatelessWidget {
 
 class TodoListItem extends StatelessWidget {
 
-  TodoListItem({Key key, Todo todo, int id})
+  TodoListItem({Key key, Todo todo, int id, OnChangeTodoStatus onChangeTodoStatus})
       : todo = todo,
         id = id,
+        onChangeTodoStatus = onChangeTodoStatus,
         super(key: new ObjectKey(todo));
 
   final int id;
   final Todo todo;
+  OnChangeTodoStatus onChangeTodoStatus;
 
   @override
   Widget build(BuildContext context) {
     return new ListTile(
       title: new Text(this.todo.title),
       subtitle: new Text(this.todo.body),
-      trailing: new IconButton(icon: new Icon(Icons.add), onPressed: null),
+      trailing: new Checkbox(
+        value: this.todo.isFinished,
+        onChanged: (bool value) {
+          this.onChangeTodoStatus(this.todo);
+        },
+      ),
       enabled: true,
+      dense: true,
       onTap: () => Navigator.pushNamed(context, '/todo/${id}'),
     );
   }
@@ -164,7 +179,8 @@ class TodoCreatePage extends StatefulWidget {
   TodoCreatePage(this.onAddTodoItem);
 
   @override
-  _TodoCreatePageState createState() => new _TodoCreatePageState(this.onAddTodoItem);
+  _TodoCreatePageState createState() =>
+      new _TodoCreatePageState(this.onAddTodoItem);
 }
 
 class _TodoCreatePageState extends State<TodoCreatePage> {
@@ -177,7 +193,6 @@ class _TodoCreatePageState extends State<TodoCreatePage> {
   _TodoCreatePageState(this.onAddTodoItem);
 
   void createTodo(BuildContext context) {
-
     final FormState form = _formKey.currentState;
     form.save();
     this.onAddTodoItem(todo);
@@ -187,37 +202,41 @@ class _TodoCreatePageState extends State<TodoCreatePage> {
   @override
   Widget build(BuildContext context) {
     return new Scaffold(
-        appBar: new AppBar(
-            title: new Text('New Todo'),
-        ),
-        body: new Form(
-            key: _formKey,
-            autovalidate: false,
-            child: new ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                children: <Widget>[
-                  new TextFormField(
-                      decoration: new InputDecoration(
-                          labelText: 'Title',
-                          hintText: 'Give a meaningful title for your todo',
-                      ),
-                      onSaved: (String value) { todo.title = value; },
-                  ),
-                  new TextFormField(
-                      decoration: new InputDecoration(
-                          labelText: 'Todo body',
-                          hintText: 'Describe your todo',
-                      ),
-                      onSaved: (String value) { todo.body = value; },
-                  ),
-                  new RaisedButton(
-                      onPressed: () =>
-                          this.createTodo(context),
-                      child: new Text('Save todo'),
-                  ),
-                ],
+      appBar: new AppBar(
+        title: new Text('New Todo'),
+      ),
+      body: new Form(
+        key: _formKey,
+        autovalidate: false,
+        child: new ListView(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          children: <Widget>[
+            new TextFormField(
+              decoration: new InputDecoration(
+                labelText: 'Title',
+                hintText: 'Give a meaningful title for your todo',
+              ),
+              onSaved: (String value) {
+                todo.title = value;
+              },
             ),
+            new TextFormField(
+              decoration: new InputDecoration(
+                labelText: 'Todo body',
+                hintText: 'Describe your todo',
+              ),
+              onSaved: (String value) {
+                todo.body = value;
+              },
+            ),
+            new RaisedButton(
+              onPressed: () =>
+                  this.createTodo(context),
+              child: new Text('Save todo'),
+            ),
+          ],
         ),
+      ),
     );
   }
 }

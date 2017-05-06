@@ -15,6 +15,8 @@ typedef void OnChangeTodoStatus(Todo todo);
 
 typedef void OnChangeBottomNavigationItem(int index);
 
+typedef void OnToggleDeleteView();
+
 class MyApp extends StatefulWidget {
 
   MyApp({Key key, this.todos}) : super(key: key);
@@ -31,12 +33,15 @@ class _MyAppState extends State<MyApp> {
 
   int currentIndex;
 
+  bool isDeleteView;
+
   @override
   void initState() {
     super.initState();
 
     this._todos.add(new Todo('test', 'test', false));
     currentIndex = 0;
+    isDeleteView = false;
   }
 
   void _handleAddTodoItem(Todo todo) {
@@ -53,8 +58,15 @@ class _MyAppState extends State<MyApp> {
 
   void _handleChangeButtomNavigationItem(int index) {
     setState(() {
-      print('Changing index');
       currentIndex = index;
+    });
+  }
+
+  void _handleToggleDeleteView() {
+    print('Test');
+    setState(() {
+      print('Altering delete view state');
+      isDeleteView = !isDeleteView;
     });
   }
 
@@ -86,8 +98,13 @@ class _MyAppState extends State<MyApp> {
       title: 'My App',
       theme: _themeData,
       home: new TodoList(
-          this._todos, this._handleAddTodoItem, this._handleChangeTodoStatus,
-          this.currentIndex, this._handleChangeButtomNavigationItem),
+          this._todos,
+          this._handleAddTodoItem,
+          this._handleChangeTodoStatus,
+          this.currentIndex,
+          this._handleChangeButtomNavigationItem,
+          this.isDeleteView,
+          this._handleToggleDeleteView),
       routes: _routes,
       onGenerateRoute: _getRoute,
     );
@@ -100,11 +117,13 @@ class TodoList extends StatelessWidget {
   OnAddTodoItem onAddTodoItem;
   OnChangeTodoStatus onChangeTodoStatus;
   OnChangeBottomNavigationItem onChangeBottomNavigationItem;
-
+  OnToggleDeleteView onToggleDeleteView;
+  bool isDeleteView;
   int currentIndex;
 
   TodoList(this.todos, this.onAddTodoItem, this.onChangeTodoStatus,
-      this.currentIndex, this.onChangeBottomNavigationItem);
+      this.currentIndex, this.onChangeBottomNavigationItem, this.isDeleteView,
+      this.onToggleDeleteView);
 
   @override
   Widget build(BuildContext context) {
@@ -113,7 +132,9 @@ class TodoList extends StatelessWidget {
         title: new Text('My Organizer'),
       ),
       body: new TodoListBody(
-          this.todos, this.currentIndex, this.onChangeTodoStatus),
+          this.todos, this.currentIndex, this.onChangeTodoStatus,
+          this.isDeleteView,
+          this.onToggleDeleteView),
       bottomNavigationBar: new BottomNavigationBar(
         currentIndex: currentIndex,
         onTap: (int index) {
@@ -148,8 +169,12 @@ class TodoListBody extends StatelessWidget {
   List<Todo> todos;
   int currentIndex;
   OnChangeTodoStatus onChangeTodoStatus;
+  OnToggleDeleteView onToggleDeleteView;
+  bool isDeleteView;
 
-  TodoListBody(this.todos, this.currentIndex, this.onChangeTodoStatus);
+  TodoListBody(this.todos, this.currentIndex, this.onChangeTodoStatus,
+      this.isDeleteView,
+      this.onToggleDeleteView);
 
   @override
   Widget build(BuildContext context) {
@@ -164,7 +189,9 @@ class TodoListBody extends StatelessWidget {
           return new TodoListItem(
             todo: todo,
             id: this.todos.length - 1,
+            isDeleteView: isDeleteView,
             onChangeTodoStatus: onChangeTodoStatus,
+            onToggleDeleteView: onToggleDeleteView,
           );
         }).toList()
     );
@@ -175,31 +202,52 @@ class TodoListBody extends StatelessWidget {
 class TodoListItem extends StatelessWidget {
 
   TodoListItem(
-      {Key key, Todo todo, int id, OnChangeTodoStatus onChangeTodoStatus})
+      {Key key, Todo todo, int id, OnChangeTodoStatus onChangeTodoStatus, bool isDeleteView, OnToggleDeleteView onToggleDeleteView})
       : todo = todo,
         id = id,
         onChangeTodoStatus = onChangeTodoStatus,
+        isDeleteView = isDeleteView,
+        onToggleDeleteView = onToggleDeleteView,
         super(key: new ObjectKey(todo));
 
   final int id;
   final Todo todo;
   OnChangeTodoStatus onChangeTodoStatus;
+  OnToggleDeleteView onToggleDeleteView;
+  bool isDeleteView;
 
   @override
   Widget build(BuildContext context) {
-    return new ListTile(
-      title: new Text(this.todo.title),
-      subtitle: new Text(this.todo.body),
-      trailing: new Checkbox(
-        value: this.todo.isFinished,
-        onChanged: (bool value) {
-          this.onChangeTodoStatus(this.todo);
-        },
-      ),
-      enabled: true,
-      dense: true,
-      onTap: () => Navigator.pushNamed(context, '/todo/${id}'),
-    );
+    Widget view;
+
+    if(isDeleteView == false) {
+      view = new ListTile(
+          title: new Text(this.todo.title),
+          subtitle: new Text(this.todo.body),
+          trailing: new Checkbox(
+              value: this.todo.isFinished,
+              onChanged: (bool value) {
+                this.onChangeTodoStatus(this.todo);
+              },
+          ),
+          onLongPress: this.onToggleDeleteView,
+          enabled: true,
+          dense: true,
+          onTap: () => Navigator.pushNamed(context, '/todo/${id}'),
+      );
+    } else {
+      view = new ListTile(
+          title: new Text(this.todo.title),
+          subtitle: new Text(this.todo.body),
+          leading: new Checkbox(onChanged: null, value: false),
+          onLongPress: this.onToggleDeleteView,
+          enabled: true,
+          dense: true,
+          //onTap: () => Navigator.pushNamed(context, '/todo/${id}'),
+      );
+    }
+
+    return view;
   }
 }
 

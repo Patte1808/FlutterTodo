@@ -1,8 +1,6 @@
 # Organizer
 
-A new flutter project.
+A very simple todo application.
 
-## Getting Started
+![alt text](http://www.giphy.com/gifs/3ohzdNX5DEWl7bFB2E "Demonstration")
 
-For help getting started with Flutter, view our online
-[documentation](http://flutter.io/).

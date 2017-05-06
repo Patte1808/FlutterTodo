@@ -10,6 +10,7 @@ final ThemeData _themeData = new ThemeData(
 );
 
 typedef void OnAddTodoItem(Todo todo);
+
 typedef void OnChangeTodoStatus(Todo todo);
 
 class MyApp extends StatefulWidget {
@@ -72,7 +73,8 @@ class _MyAppState extends State<MyApp> {
     return new MaterialApp(
       title: 'My App',
       theme: _themeData,
-      home: new TodoList(this._todos, this._handleAddTodoItem, this._handleChangeTodoStatus),
+      home: new TodoList(
+          this._todos, this._handleAddTodoItem, this._handleChangeTodoStatus),
       routes: _routes,
       onGenerateRoute: _getRoute,
     );
@@ -96,9 +98,9 @@ class TodoList extends StatelessWidget {
       body: new ListView(
           children: this.todos.map((Todo todo) {
             return new TodoListItem(
-                todo: todo,
-                id: this.todos.length - 1,
-                onChangeTodoStatus: onChangeTodoStatus,
+              todo: todo,
+              id: this.todos.length - 1,
+              onChangeTodoStatus: onChangeTodoStatus,
             );
           }).toList()
       ),
@@ -114,7 +116,8 @@ class TodoList extends StatelessWidget {
 
 class TodoListItem extends StatelessWidget {
 
-  TodoListItem({Key key, Todo todo, int id, OnChangeTodoStatus onChangeTodoStatus})
+  TodoListItem(
+      {Key key, Todo todo, int id, OnChangeTodoStatus onChangeTodoStatus})
       : todo = todo,
         id = id,
         onChangeTodoStatus = onChangeTodoStatus,
@@ -152,18 +155,36 @@ class TodoItemDetail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final TextStyle descriptionStyle = theme.textTheme.subhead;
+
     return new Scaffold(
       appBar: new AppBar(
         title: new Text('Detailpage'),
       ),
-      body: new Container(
-        child:
-        new Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      body:
+      new Container(
+        padding: const EdgeInsets.all(32.0),
+        child: new Row(
           children: [
-            new Container(
-              padding: const EdgeInsets.all(8.0),
-              child: new Text(this.todo.title),
+            new Expanded(
+              child: new Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  new Container(
+                    padding: const EdgeInsets.only(bottom: 8.0),
+                    child: new Text(todo.title, style: new TextStyle(
+                      fontWeight: FontWeight.bold,
+                    )),
+                  ),
+                  new Container(
+                    child: new Text(
+                      todo.body,
+                      softWrap: true,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),

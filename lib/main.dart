@@ -47,7 +47,8 @@ class _MyAppState extends State<MyApp> {
       if (this._todos[int.parse(path[2])] != null) {
         return new MaterialPageRoute<Null>(
             settings: settings,
-            builder: (BuildContext context) => new TodoItemDetail(todo: this._todos[int.parse(path[2])])
+            builder: (BuildContext context) =>
+            new TodoItemDetail(todo: this._todos[int.parse(path[2])])
         );
       }
     }
@@ -57,6 +58,8 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     var _routes = <String, WidgetBuilder>{
+      '/todo/new': (BuildContext context) =>
+      new TodoCreatePage(this._handleAddTodoItem),
       '/todoDetail': (BuildContext context) => new TodoItemDetail(),
     };
 
@@ -80,22 +83,23 @@ class TodoList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return new Scaffold(
-        appBar: new AppBar(
-            title: new Text('My Organizer'),
-        ),
-        body: new ListView(
-            children: this.todos.map((Todo todo) {
-              return new TodoListItem(
-                  todo: todo,
-                  id: this.todos.length - 1
-              );
-            }).toList()
-        ),
-        floatingActionButton: new FloatingActionButton(
-            tooltip: 'Add',
-            child: new Icon(Icons.add),
-            onPressed: () => this.onAddTodoItem(new Todo('', '', false)),
-        ),
+      appBar: new AppBar(
+        title: new Text('My Organizer'),
+      ),
+      body: new ListView(
+          children: this.todos.map((Todo todo) {
+            return new TodoListItem(
+                todo: todo,
+                id: this.todos.length - 1
+            );
+          }).toList()
+      ),
+      floatingActionButton: new FloatingActionButton(
+        tooltip: 'Add',
+        child: new Icon(Icons.add),
+        //onPressed: () => this.onAddTodoItem(new Todo('', '', false)),
+        onPressed: () => Navigator.pushNamed(context, '/todo/new'),
+      ),
     );
   }
 }
@@ -149,6 +153,71 @@ class TodoItemDetail extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class TodoCreatePage extends StatefulWidget {
+
+  OnAddTodoItem onAddTodoItem;
+
+  TodoCreatePage(this.onAddTodoItem);
+
+  @override
+  _TodoCreatePageState createState() => new _TodoCreatePageState(this.onAddTodoItem);
+}
+
+class _TodoCreatePageState extends State<TodoCreatePage> {
+  final GlobalKey<FormState> _formKey = new GlobalKey<FormState>();
+
+  OnAddTodoItem onAddTodoItem;
+
+  Todo todo = new Todo('', '', false);
+
+  _TodoCreatePageState(this.onAddTodoItem);
+
+  void createTodo(BuildContext context) {
+
+    final FormState form = _formKey.currentState;
+    form.save();
+    this.onAddTodoItem(todo);
+    Navigator.pop(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return new Scaffold(
+        appBar: new AppBar(
+            title: new Text('New Todo'),
+        ),
+        body: new Form(
+            key: _formKey,
+            autovalidate: false,
+            child: new ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                children: <Widget>[
+                  new TextFormField(
+                      decoration: new InputDecoration(
+                          labelText: 'Title',
+                          hintText: 'Give a meaningful title for your todo',
+                      ),
+                      onSaved: (String value) { todo.title = value; },
+                  ),
+                  new TextFormField(
+                      decoration: new InputDecoration(
+                          labelText: 'Todo body',
+                          hintText: 'Describe your todo',
+                      ),
+                      onSaved: (String value) { todo.body = value; },
+                  ),
+                  new RaisedButton(
+                      onPressed: () =>
+                          this.createTodo(context),
+                      child: new Text('Save todo'),
+                  ),
+                ],
+            ),
+        ),
     );
   }
 }

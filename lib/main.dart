@@ -10,8 +10,8 @@ final ThemeData _themeData = new ThemeData(
 );
 
 typedef void OnAddTodoItem(Todo todo);
-
 typedef void OnChangeTodoStatus(Todo todo);
+typedef void OnChangeBottomNavigationItem(int index);
 
 class MyApp extends StatefulWidget {
 
@@ -27,11 +27,14 @@ class _MyAppState extends State<MyApp> {
 
   List<Todo> _todos = new List<Todo>();
 
+  int currentIndex;
+
   @override
   void initState() {
     super.initState();
 
     this._todos.add(new Todo('test', 'test', false));
+    currentIndex = 0;
   }
 
   void _handleAddTodoItem(Todo todo) {
@@ -43,6 +46,13 @@ class _MyAppState extends State<MyApp> {
   void _handleChangeTodoStatus(Todo todo) {
     setState(() {
       todo.isFinished = !todo.isFinished;
+    });
+  }
+
+  void _handleChangeButtomNavigationItem(int index) {
+    setState(() {
+      print('Changing index');
+      currentIndex = index;
     });
   }
 
@@ -74,7 +84,7 @@ class _MyAppState extends State<MyApp> {
       title: 'My App',
       theme: _themeData,
       home: new TodoList(
-          this._todos, this._handleAddTodoItem, this._handleChangeTodoStatus),
+          this._todos, this._handleAddTodoItem, this._handleChangeTodoStatus, this.currentIndex, this._handleChangeButtomNavigationItem),
       routes: _routes,
       onGenerateRoute: _getRoute,
     );
@@ -86,8 +96,11 @@ class TodoList extends StatelessWidget {
   List<Todo> todos = new List<Todo>();
   OnAddTodoItem onAddTodoItem;
   OnChangeTodoStatus onChangeTodoStatus;
+  OnChangeBottomNavigationItem onChangeBottomNavigationItem;
 
-  TodoList(this.todos, this.onAddTodoItem, this.onChangeTodoStatus);
+  int currentIndex;
+
+  TodoList(this.todos, this.onAddTodoItem, this.onChangeTodoStatus, this.currentIndex, this.onChangeBottomNavigationItem);
 
   @override
   Widget build(BuildContext context) {
@@ -103,6 +116,26 @@ class TodoList extends StatelessWidget {
               onChangeTodoStatus: onChangeTodoStatus,
             );
           }).toList()
+      ),
+      bottomNavigationBar: new BottomNavigationBar(
+        currentIndex: currentIndex,
+        onTap: (int index) {
+          this.onChangeBottomNavigationItem(index);
+        },
+        items: [
+          new BottomNavigationBarItem(
+            title: new Text('All'),
+            icon: new Icon(Icons.list),
+          ),
+          new BottomNavigationBarItem(
+            title: new Text('Active'),
+            icon: new Icon(Icons.alarm_on),
+          ),
+          new BottomNavigationBarItem(
+            title: new Text('Completed'),
+            icon: new Icon(Icons.archive),
+          ),
+        ],
       ),
       floatingActionButton: new FloatingActionButton(
         tooltip: 'Add',
@@ -235,7 +268,7 @@ class _TodoCreatePageState extends State<TodoCreatePage> {
             new TextFormField(
               decoration: new InputDecoration(
                 labelText: 'Title',
-                hintText: 'Give a meaningful title for your todo',
+                hintText: 'Enter a meaningful title for your todo',
               ),
               onSaved: (String value) {
                 todo.title = value;
